@@ -1,0 +1,88 @@
+import random
+import string
+import hashlib
+import pyperclip
+import argparse
+
+
+russian_letters = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпРрСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя"
+
+
+# Генерация пароля
+def generate(length, symbols, args):
+    result = ""
+    pas_hash = None
+    flags = {"has_digits": False,
+             "has_punctuation": False,
+             "has_upper": False,
+             "has_lower": False,
+             "has_rus": False
+             }
+    if not args.nopunct:
+        flags["has_punctuation"] = True
+    if not args.norus:
+        flags["has_rus"] = True
+    check = False
+    while (False in flags.values()) and not check:
+        result = ""
+        for i in range(length):
+            char = random.choice(symbols)
+            if char in string.digits:
+                flags["has_digits"] = True
+            if char in string.ascii_lowercase:
+                flags["has_lower"] = True
+            if char in string.ascii_uppercase:
+                flags["has_upper"] = True
+            if char in string.punctuation:
+                flags["has_punctuation"] = True
+            if char in russian_letters:
+                flags["has_rus"] = True
+            result += char
+        pas_hash = hashlib.sha512()
+        pas_hash.update(result.encode())
+        check = True if check_database(pas_hash.hexdigest()) else False
+    with open("database.db", 'a') as f:
+        f.write(pas_hash.hexdigest() + '\n')
+    return result
+
+
+# Проверка базы данных на наличие хеша
+def check_database(hash):
+    try:
+        with open("database.db", 'r') as f:
+            db = f.readlines()
+        if hash in db:
+            return False
+        else:
+            return True
+    except FileNotFoundError:
+            return True
+
+
+# Главнаая функция
+def main(args):
+    # Формируем список символов
+    symbols = string.ascii_letters + string.digits
+    symbols += russian_letters if args.norus else ""
+    symbols += string.punctuation if args.nopunct else ""
+
+    # Генерируем пароль
+    password = generate(args.length, symbols, args)
+
+    # Возвращаем результат
+    if args.show:
+        print(password)
+    pyperclip.copy(password)
+    print("Пароль скопирован в буфер обмена")
+
+
+if __name__ == "__main__":
+    # Парсим аргументы командной строки
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--length", default=16, type=int)
+    parser.add_argument("-nr", "--NoRussian", action="store_false", dest="norus")
+    parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct")
+    parser.add_argument("-s", "--show", action="store_true", dest="show")
+    args = parser.parse_args()
+    main(args)
+
