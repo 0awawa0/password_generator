@@ -41,8 +41,9 @@ def generate(length, symbols, args):
         pas_hash = hashlib.sha512()
         pas_hash.update(result.encode())
         check = True if check_database(pas_hash.hexdigest()) else False
-    with open("database.db", 'a') as f:
-        f.write(pas_hash.hexdigest() + '\n')
+    if not args.nosave:
+        with open("database.db", 'a') as f:
+            f.write(pas_hash.hexdigest() + '\n')
     return result
 
 
@@ -83,6 +84,7 @@ if __name__ == "__main__":
     parser.add_argument("-nr", "--NoRussian", action="store_false", dest="norus")
     parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct")
     parser.add_argument("-s", "--show", action="store_true", dest="show")
+    parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave")
     args = parser.parse_args()
     main(args)
 
