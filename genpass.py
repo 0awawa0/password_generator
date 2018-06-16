@@ -153,25 +153,30 @@ def main(args):
         symbols += russian_letters if args.norus else ""
         symbols += string.punctuation if args.nopunct else ""
 
-        # Генерируем пароль
-        password = generate(symbols, args)
+        for i in range(args.count):
+            # Генерируем пароль
+            password = generate(symbols, args)
 
-    # Возвращаем результат
-    if args.show:
-        print(password)
-    pyperclip.copy(password)
-    print("Пароль скопирован в буфер обмена")
+            # Возвращаем результат
+            if args.count == 1:
+                if args.show:
+                    print(password)
+                pyperclip.copy(password)
+                print("Пароль скопирован в буфер обмена")
+            else:
+                print(password)
 
 
 if __name__ == "__main__":
     # Парсим аргументы командной строки
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--length", default=16, type=int)
+    parser.add_argument("-l", "--length", default=16, type=int, dest="length")
     parser.add_argument("-nr", "--NoRussian", action="store_false", dest="norus")
     parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct")
     parser.add_argument("-s", "--show", action="store_true", dest="show")
     parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave")
     parser.add_argument("-p", "--phrase", type=str, dest="phrase", default=None)
+    parser.add_argument("-c", "--count", type=int, dest="count", default=1)
     args = parser.parse_args()
 
     # Запусаем главный цикл программы
