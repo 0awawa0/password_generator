@@ -7,6 +7,32 @@ import argparse
 
 russian_letters = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпРрСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя"
 
+translit = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d",
+    "е": "e", "ё": "e", "ж": "j", "з": "z", "и": "i",
+    "й": "i", "к": "k", "л": "l", "м": "m", "н": "n",
+    "о": "o", "п": "p", "р": "r", "с": "s", "т": "t",
+    "у": "u", "ф": "f", "х": "h", "ц": "c", "ч": "c",
+    "ш": "s", "щ": "s", "э": "e", "ю": "u", "я": "y"
+}
+
+numbers = {
+    "a": "4",
+    "b": "8",
+    "e": "3",
+    "g": "9",
+    "i": "1",
+    "o": "0",
+    "s": "5",
+    "t": "7"
+}
+
+punct = {
+    "a": "@",
+    "i": "!",
+    "s": "$"
+}
+
 
 # Генерация пароля
 def generate(symbols, args):
@@ -66,6 +92,43 @@ def generate(symbols, args):
     return result
 
 
+# Генерация пароля из фразы
+def gen_from_phrase(args):
+    phrase = args.phrase
+    phrase = str.lower(phrase).split(" ")
+    result = ""
+
+    # Получем первые буквы слов в фразе
+    for word in phrase:
+        result += word[0]
+
+    # Переводим буквы в транслит
+    for k in translit.keys():
+        result = result.replace(k, translit[k])
+
+    # Переводим некоторые буквы в спец. символы и цифры
+    for k in result:
+        if args.nopunct:
+            if k in punct.keys():
+                result = result.replace(k, punct[k])
+            elif k in numbers.keys():
+                result = result.replace(k, numbers[k])
+        else:
+            if k in numbers.keys():
+                result = result.replace(k, numbers[k])
+
+    # Переводим буквы в верхний регистр случайным образом
+    result = list(result)
+    for k in range(len(result)):
+        coin = random.getrandbits(1)
+        if coin:
+            result[k] = result[k].upper()
+    result = "".join(result)
+
+    # Возвращаем результат
+    return result
+
+
 # Проверка базы данных на наличие хеша
 def check_database(hash):
     try:
@@ -81,13 +144,17 @@ def check_database(hash):
 
 # Главнаая функция
 def main(args):
-    # Формируем список символов
-    symbols = string.ascii_letters + string.digits
-    symbols += russian_letters if args.norus else ""
-    symbols += string.punctuation if args.nopunct else ""
 
-    # Генерируем пароль
-    password = generate(symbols, args)
+    if args.phrase:
+        password = gen_from_phrase(args)
+    else:
+        # Формируем список символов
+        symbols = string.ascii_letters + string.digits
+        symbols += russian_letters if args.norus else ""
+        symbols += string.punctuation if args.nopunct else ""
+
+        # Генерируем пароль
+        password = generate(symbols, args)
 
     # Возвращаем результат
     if args.show:
@@ -104,6 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct")
     parser.add_argument("-s", "--show", action="store_true", dest="show")
     parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave")
+    parser.add_argument("-p", "--phrase", type=str, dest="phrase", default=None)
     args = parser.parse_args()
 
     # Запусаем главный цикл программы
