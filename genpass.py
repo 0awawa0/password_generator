@@ -9,24 +9,37 @@ russian_letters = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНн�
 
 
 # Генерация пароля
-def generate(length, symbols, args):
+def generate(symbols, args):
+
+    # Начальное значение - пустая строка, хэш - None,  и значение флагов False
     result = ""
     pas_hash = None
+
+    # Флаги нужны для проверки безопасности пароля
     flags = {"has_digits": False,
              "has_punctuation": False,
              "has_upper": False,
              "has_lower": False,
              "has_rus": False
              }
+
+    # Проверка аргументов командной строки
     if not args.nopunct:
         flags["has_punctuation"] = True
     if not args.norus:
         flags["has_rus"] = True
+
+    # check хранит результат проверки наличия пароля в базе данных, если True - пароля нет
     check = False
+
+    # Генерация пароля
     while (False in flags.values()) and not check:
-        result = ""
-        for i in range(length):
+        for i in range(args.length):
+
+            # Берем случайный символ из переднного массива
             char = random.choice(symbols)
+
+            # Проверяем что это за символ и устанавливаем соответствующий флаг
             if char in string.digits:
                 flags["has_digits"] = True
             if char in string.ascii_lowercase:
@@ -37,10 +50,16 @@ def generate(length, symbols, args):
                 flags["has_punctuation"] = True
             if char in russian_letters:
                 flags["has_rus"] = True
+
+            # Добавляем символ к результирующему паролю
             result += char
+
+        # Берем хеш от пароля и проверяем его по базе данных
         pas_hash = hashlib.sha512()
         pas_hash.update(result.encode())
-        check = True if check_database(pas_hash.hexdigest()) else False
+        check = check_database(pas_hash)
+
+    # Сгенерированный пароль записываем в базу данных и возвращаем результат функции
     if not args.nosave:
         with open("database.db", 'a') as f:
             f.write(pas_hash.hexdigest() + '\n')
@@ -68,7 +87,7 @@ def main(args):
     symbols += string.punctuation if args.nopunct else ""
 
     # Генерируем пароль
-    password = generate(args.length, symbols, args)
+    password = generate(symbols, args)
 
     # Возвращаем результат
     if args.show:
@@ -86,5 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--show", action="store_true", dest="show")
     parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave")
     args = parser.parse_args()
+
+    # Запусаем главный цикл программы
     main(args)
 
