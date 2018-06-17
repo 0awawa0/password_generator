@@ -147,6 +147,10 @@ def main(args):
 
     if args.phrase:
         password = gen_from_phrase(args)
+        if args.show:
+            print(password)
+        pyperclip.copy(password)
+        print("Пароль скопирован в буфер обмена")
     else:
         # Формируем список символов
         symbols = string.ascii_letters + string.digits
