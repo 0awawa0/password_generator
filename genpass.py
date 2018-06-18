@@ -49,36 +49,34 @@ def generate(symbols, args):
              "has_rus": False
              }
 
-    # Проверка аргументов командной строки
-    if not args.nopunct:
-        flags["has_punctuation"] = True
-    if not args.norus:
-        flags["has_rus"] = True
+    
 
     # check хранит результат проверки наличия пароля в базе данных, если True - пароля нет
     check = False
 
     # Генерация пароля
     while (False in flags.values()) and not check:
+        flags = {"has_digits": False,
+             "has_punctuation": False,
+             "has_upper": False,
+             "has_lower": False,
+             "has_rus": False
+             }
+             # Проверка аргументов командной строки
+        if not args.nopunct:
+            flags["has_punctuation"] = True
+        if not args.norus:
+            flags["has_rus"] = True
+
         for i in range(args.length):
-
-            # Берем случайный символ из переднного массива
-            char = random.choice(symbols)
-
+            # Берем случайный символ из переданного массива, добавляем его к паролю
             # Проверяем что это за символ и устанавливаем соответствующий флаг
-            if char in string.digits:
-                flags["has_digits"] = True
-            if char in string.ascii_lowercase:
-                flags["has_lower"] = True
-            if char in string.ascii_uppercase:
-                flags["has_upper"] = True
-            if char in string.punctuation:
-                flags["has_punctuation"] = True
-            if char in russian_letters:
-                flags["has_rus"] = True
-
-            # Добавляем символ к результирующему паролю
-            result += char
+            result += random.choice(symbols)
+            if result[-1] in string.digits: flags["has_digits"] = True
+            if result[-1] in string.ascii_uppercase: flags["has_upper"] = True
+            if result[-1] in string.ascii_lowercase: flags["has_lower"] = True
+            if result[-1] in string.punctuation: flags["has_punctuation"] = True
+            if result[-1] in russian_letters: flags["has_rus"] = True
 
         # Берем хеш от пароля и проверяем его по базе данных
         pas_hash = hashlib.sha512()
@@ -130,11 +128,11 @@ def gen_from_phrase(args):
 
 
 # Проверка базы данных на наличие хеша
-def check_database(hash):
+def check_database(pas_hash):
     try:
         with open("database.db", 'r') as f:
             db = f.readlines()
-        if hash in db:
+        if pas_hash.hexdigest() in db:
             return False
         else:
             return True
@@ -174,13 +172,13 @@ def main(args):
 if __name__ == "__main__":
     # Парсим аргументы командной строки
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--length", default=16, type=int, dest="length")
-    parser.add_argument("-nr", "--NoRussian", action="store_false", dest="norus")
-    parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct")
-    parser.add_argument("-s", "--show", action="store_true", dest="show")
-    parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave")
-    parser.add_argument("-p", "--phrase", type=str, dest="phrase", default=None)
-    parser.add_argument("-c", "--count", type=int, dest="count", default=1)
+    parser.add_argument("-l", "--length", default=16, type=int, dest="length", help="length of generated password, default=16")
+    parser.add_argument("-nr", "--NoRussian", action="store_false", dest="norus", help="disables russian letters")
+    parser.add_argument("-np", "--NoPunctuation", action="store_false", dest="nopunct", help="disables punctuation")
+    parser.add_argument("-s", "--show", action="store_true", dest="show", help="print password to command prompt")
+    parser.add_argument("-ns", "--NoSave", action="store_true", dest="nosave", help="don't save password to database")
+    parser.add_argument("-p", "--phrase", type=str, dest="phrase", default=None, help="generate password from phrase")
+    parser.add_argument("-c", "--count", type=int, dest="count", default=1, help="count of passwords to generate, default=1")
     args = parser.parse_args()
 
     # Запусаем главный цикл программы
