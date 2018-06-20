@@ -62,7 +62,7 @@ def generate(symbols, args):
              "has_lower": False,
              "has_rus": False
              }
-             # Проверка аргументов командной строки
+        # Проверка аргументов командной строки
         if not args.nopunct:
             flags["has_punctuation"] = True
         if not args.norus:
