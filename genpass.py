@@ -38,7 +38,6 @@ punct = {
 def generate(symbols, args):
 
     # Начальное значение - пустая строка, хэш - None,  и значение флагов False
-    result = ""
     pas_hash = None
 
     # Флаги нужны для проверки безопасности пароля
@@ -55,7 +54,8 @@ def generate(symbols, args):
     check = False
 
     # Генерация пароля
-    while (False in flags.values()) and not check:
+    while (False in flags.values()) or not check:
+        result = ""
         flags = {"has_digits": False,
              "has_punctuation": False,
              "has_upper": False,
@@ -154,7 +154,9 @@ def main(args):
         symbols = string.ascii_letters + string.digits
         symbols += russian_letters if args.norus else ""
         symbols += string.punctuation if args.nopunct else ""
-
+        symbols = symbols.encode("utf-8").decode("utf-8")
+        with open("charset.txt", "w") as f:
+        	f.write(symbols)
         for i in range(args.count):
             # Генерируем пароль
             password = generate(symbols, args)
@@ -163,6 +165,10 @@ def main(args):
             if args.count == 1:
                 if args.show:
                     print(password)
+                    h = hashlib.sha1(password.encode()).hexdigest()
+                    with open(r"E:\Shared\sec_pass_sha1", 'w') as f:
+                        f.write(h)
+                    print(f"Password hash {h}")
                 pyperclip.copy(password)
                 print("Пароль скопирован в буфер обмена")
             else:
